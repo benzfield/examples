@@ -23,24 +23,7 @@ import zipfile
 
 import tempfile
 
-from google.cloud import storage  # pylint: disable=no-name-in-module
-
 import trainer
-
-GCS_REGEX = re.compile("gs://([^/]*)(/.*)?")
-
-
-def split_gcs_uri(gcs_uri):
-  """Split a GCS URI into bucket and path."""
-  m = GCS_REGEX.match(gcs_uri)
-  bucket = m.group(1)
-  path = ""
-  if m.group(2):
-    path = m.group(2).lstrip("/")
-  return bucket, path
-
-def is_gcs_path(gcs_uri):
-  return GCS_REGEX.match(gcs_uri)
 
 def process_input_file(remote_file):
   """Process the input file.
@@ -56,22 +39,7 @@ def process_input_file(remote_file):
   Returns:
     csv_file: The local csv file to process
   """
-  if is_gcs_path(remote_file):
-    # Download the input to a local
-    with tempfile.NamedTemporaryFile() as hf:
-      input_data = hf.name
-
-    logging.info("Copying %s to %s", remote_file, input_data)
-    input_data_gcs_bucket, input_data_gcs_path = split_gcs_uri(
-      remote_file)
-
-    logging.info("Download bucket %s object %s.", input_data_gcs_bucket,
-                 input_data_gcs_path)
-    bucket = storage.Bucket(storage.Client(), input_data_gcs_bucket)
-    storage.Blob(input_data_gcs_path, bucket).download_to_filename(
-      input_data)
-  else:
-    input_data = remote_file
+  input_data = remote_file
 
   ext = os.path.splitext(input_data)[-1]
   if ext.lower() == '.zip':
@@ -177,9 +145,6 @@ def main(unparsed_args=None):  # pylint: disable=too-many-statements
 
   if mode == "keras":
     local_model_output = args.output_model
-    if is_gcs_path(args.output_model):
-      local_model_output = os.path.join(output_dir, "model.h5")
-
     model_trainer.train_keras(local_model_output,
                               base_name=os.path.join(output_dir, "model-checkpoint"),
                               epochs=args.num_epochs)
@@ -206,14 +171,7 @@ def main(unparsed_args=None):  # pylint: disable=too-many-statements
       continue
 
     logging.info("Copying %s to %s", local, remote)
-
-    if is_gcs_path(remote):
-      bucket_name, path = split_gcs_uri(remote)
-      bucket = storage.Bucket(storage.Client(), bucket_name)
-      blob = storage.Blob(path, bucket)
-      blob.upload_from_filename(local)
-    else:
-      shutil.move(local, remote)
+    shutil.move(local, remote)
 
 if __name__ == '__main__':
   main()
