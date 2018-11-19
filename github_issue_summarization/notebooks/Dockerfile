@@ -8,4 +8,5 @@ RUN pip install matplotlib
 RUN pip install pydot
 
 COPY train.py /workdir/train.py
+COPY trainer.py /workdir/trainer.py
 COPY seq2seq_utils.py /workdir/seq2seq_utils.py
