@@ -1,0 +1,1 @@
+docker build --force-rm=true -t registry.cn-hangzhou.aliyuncs.com/yab/issue-summarization:0.1 .
