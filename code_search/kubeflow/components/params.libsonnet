@@ -1,5 +1,12 @@
 {
-  global: {},
+  global: {
+    workingDir: "gs://YOUR/WORKING_DIR",
+    dataDir: "gs://YOUR/DATA_DIR",
+    project: "SET_TO_YOUR_PROJECT",
+    // Experiment needs to be set to a value that exists 
+    // otherwise ksonnet will be valid.
+    experiment: "demo-trainer-11-07-dist-sync-gpu",
+  },
   components: {
 
     // TODO(jlewi): t2t-job and t2t-code-search are intended to set values
@@ -8,7 +15,7 @@
     // are not picked up by the individual components.
     // Need to see if we can find a way to fix this.
 
-    local imageTag = "v20181108-004b5ad-dirty-eba459",
+    local imageTag = "v20181117-3c030ae-dirty-4d809c",
     "t2t-job": {
       jobType: "trainer",
       numChief: 0,
@@ -20,8 +27,7 @@
       eval_steps: 10,
       image: "gcr.io/kubeflow-examples/code-search:" + imageTag,
       imageGpu: "gcr.io/kubeflow-examples/code-search-gpu:" + imageTag,
-      dataflowImage: "gcr.io/kubeflow-examples/code-search-dataflow:v20181109-dc79384",
-
+      dataflowImage: "gcr.io/kubeflow-examples/code-search-dataflow:" + imageTag,
       imagePullSecrets: [],
       // TODO(jlewi): dataDir doesn't seem to be used.
       dataDir: "null",
@@ -62,14 +68,6 @@
       hparams_set: $.components["t2t-code-search"].hparams_set,
       image: $.components["t2t-job"].image,
     },
-    "t2t-code-search-serving": {
-      name: "t2t-code-search",
-      modelName: "t2t-code-search",
-      modelPath: $.components["t2t-code-search"].workingDir + "/output/export/Servo",
-      modelServerImage: "gcr.io/kubeflow-images-public/tensorflow-serving-1.8:latest",
-      cloud: "gcp",
-      gcpCredentialSecretName: "user-gcp-sa",
-    },
     nmslib: {
       replicas: 1,
       image: "gcr.io/kubeflow-dev/code-search-ui:v20180817-0d4a60d",
@@ -81,17 +79,11 @@
     },
     "search-index-creator": {
       name: "search-index-creator",
+      jobNameSuffix: "",
+      image: $.components["t2t-job"].dataflowImage,
       dataDir: $.components["t2t-code-search"].workingDir + "/data",
       lookupFile: $.components["t2t-code-search"].workingDir + "/code_search_index.csv",
       indexFile: $.components["t2t-code-search"].workingDir + "/code_search_index.nmslib",
-    },
-    "search-index-server": {
-      name: "search-index-server",
-      problem: $.components["t2t-code-search"].problem,
-      dataDir: $.components["t2t-code-search"].workingDir + "/data",
-      lookupFile: $.components["t2t-code-search"].workingDir + "/code_search_index.csv",
-      indexFile: $.components["t2t-code-search"].workingDir + "/code_search_index.nmslib",
-      servingUrl: "http://t2t-code-search.kubeflow:9001/v1/models/t2t-code-search:predict",
     },
     "submit-preprocess-job": {
       name: "submit-preprocess-job",

@@ -1,10 +1,13 @@
-local env = std.extVar("__ksonnet/environments");
-local params = std.extVar("__ksonnet/params").components["t2t-code-search-serving"];
+// @apiVersion 0.1
+// @name io.ksonnet.pkg.tf-serving
+// @description TensorFlow serving
+// @shortDescription A TensorFlow serving deployment
+// @param name string Name to give to each of the components
 
 local k = import "k.libsonnet";
 
 // ksonnet appears to require name be a parameter of the prototype which is why we handle it differently.
-local name = params.name;
+local name = import "param://name";
 
 // updatedParams includes the namespace from env by default.
 // We can override namespace in params if needed
